@@ -1,0 +1,15 @@
+# Environment
+.env
+credentials.json
+
+# Flutter
+app/.dart_tool/
+app/build/
+app/.flutter-plugins
+app/.flutter-plugins-dependencies
+
+# Go
+backend/vendor/
+
+# macOS
+.DS_Store

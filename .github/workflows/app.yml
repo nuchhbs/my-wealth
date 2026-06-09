@@ -1,0 +1,22 @@
+name: App CI
+
+on:
+  push:
+    paths: ["app/**"]
+  pull_request:
+    paths: ["app/**"]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.19.x"
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter test
