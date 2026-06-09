@@ -17,9 +17,10 @@ func NewFinanceService(s *sheets.Client) *FinanceService {
 	return &FinanceService{sheets: s}
 }
 
-// GetTransactions reads from Sheet1 with columns: Date, Category, Amount, Note
+// GetTransactions reads rows from the sheet.
+// Expected columns: Date (YYYY-MM-DD), Category, Amount, Note
 func (s *FinanceService) GetTransactions() ([]model.Transaction, error) {
-	rows, err := s.sheets.ReadRange("Sheet1!A2:D")
+	rows, err := s.sheets.ReadAll()
 	if err != nil {
 		return nil, err
 	}
@@ -29,22 +30,22 @@ func (s *FinanceService) GetTransactions() ([]model.Transaction, error) {
 		if len(row) < 3 {
 			continue
 		}
-		date, err := time.Parse("2006-01-02", fmt.Sprint(row[0]))
+		date, err := time.Parse("2006-01-02", row[0])
 		if err != nil {
-			continue
+			continue // skip rows with bad date
 		}
-		amount, err := strconv.ParseFloat(fmt.Sprint(row[2]), 64)
+		amount, err := strconv.ParseFloat(row[2], 64)
 		if err != nil {
 			continue
 		}
 		note := ""
 		if len(row) > 3 {
-			note = fmt.Sprint(row[3])
+			note = row[3]
 		}
 		txns = append(txns, model.Transaction{
 			ID:       fmt.Sprintf("txn-%d", i+1),
 			Date:     date,
-			Category: fmt.Sprint(row[1]),
+			Category: row[1],
 			Amount:   amount,
 			Note:     note,
 		})

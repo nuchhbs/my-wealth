@@ -12,18 +12,18 @@ import (
 
 func main() {
 	sheetID := os.Getenv("GOOGLE_SHEET_ID")
-	credFile := os.Getenv("GOOGLE_CREDENTIALS_FILE")
-
-	sheetsClient, err := sheets.NewClient(credFile, sheetID)
-	if err != nil {
-		log.Fatalf("failed to init sheets client: %v", err)
+	if sheetID == "" {
+		log.Fatal("GOOGLE_SHEET_ID is required")
 	}
+	gid := os.Getenv("GOOGLE_SHEET_GID") // optional, default = "0"
 
+	sheetsClient := sheets.NewClient(sheetID, gid)
 	svc := service.NewFinanceService(sheetsClient)
 	h := handler.NewHandler(svc)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
 		w.Write([]byte(`{"status":"ok"}`))
 	})
 	mux.HandleFunc("/api/summary", h.GetSummary)
