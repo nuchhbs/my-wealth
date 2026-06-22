@@ -15,25 +15,28 @@ func NewHandler(svc *service.FinanceService) *Handler {
 	return &Handler{svc: svc}
 }
 
-func (h *Handler) GetTransactions(w http.ResponseWriter, r *http.Request) {
-	txns, err := h.svc.GetTransactions()
+// GET /api/statement — full financial statement (income, expenses, savings, summary)
+func (h *Handler) GetStatement(w http.ResponseWriter, r *http.Request) {
+	stmt, err := h.svc.GetStatement()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	writeJSON(w, txns)
+	writeJSON(w, stmt)
 }
 
+// GET /api/summary — summary only
 func (h *Handler) GetSummary(w http.ResponseWriter, r *http.Request) {
-	summary, err := h.svc.GetSummary()
+	stmt, err := h.svc.GetStatement()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	writeJSON(w, summary)
+	writeJSON(w, stmt.Summary)
 }
 
 func writeJSON(w http.ResponseWriter, v any) {
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 	json.NewEncoder(w).Encode(v)
 }

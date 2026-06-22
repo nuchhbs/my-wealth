@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/joho/godotenv"
 	"github.com/nuchhbs/my-wealth/backend/internal/handler"
 	"github.com/nuchhbs/my-wealth/backend/internal/service"
 	"github.com/nuchhbs/my-wealth/backend/internal/sheets"
@@ -12,8 +13,15 @@ import (
 )
 
 func main() {
+	// Load .env from common locations
+	for _, path := range []string{".env", "../.env", "../../.env"} {
+		if err := godotenv.Load(path); err == nil {
+			break
+		}
+	}
+
 	sheetID := resolveSheetID()
-	gid := os.Getenv("GOOGLE_SHEET_GID") // optional, default = "0"
+	gid := os.Getenv("GOOGLE_SHEET_GID")
 
 	sheetsClient := sheets.NewClient(sheetID, gid)
 	svc := service.NewFinanceService(sheetsClient)
@@ -24,8 +32,8 @@ func main() {
 		w.Header().Set("Content-Type", "application/json")
 		w.Write([]byte(`{"status":"ok"}`))
 	})
+	mux.HandleFunc("/api/statement", h.GetStatement)
 	mux.HandleFunc("/api/summary", h.GetSummary)
-	mux.HandleFunc("/api/transactions", h.GetTransactions)
 
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -36,8 +44,6 @@ func main() {
 	log.Fatal(http.ListenAndServe(":"+port, mux))
 }
 
-// resolveSheetID prefers encrypted GOOGLE_SHEET_ID_ENC (needs SECRET_KEY),
-// falls back to plaintext GOOGLE_SHEET_ID for local dev.
 func resolveSheetID() string {
 	enc := os.Getenv("GOOGLE_SHEET_ID_ENC")
 	if enc != "" {
@@ -57,6 +63,5 @@ func resolveSheetID() string {
 	if id == "" {
 		log.Fatal("either GOOGLE_SHEET_ID or GOOGLE_SHEET_ID_ENC must be set")
 	}
-	log.Println("warning: using plaintext GOOGLE_SHEET_ID (consider encrypting)")
 	return id
 }
